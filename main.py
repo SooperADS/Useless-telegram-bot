@@ -3,15 +3,13 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.enums import ChatType
 
+from private import BOT_TOKEN
 from helper import *
 
 import asyncio
 import logging
 
 logging.basicConfig(level=logging.INFO)
-
-# Токен бота (замените на свой)
-BOT_TOKEN = "<put your token here>"
 
 BOT = Bot(token=BOT_TOKEN)
 DISPATCHER = Dispatcher()
