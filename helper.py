@@ -92,6 +92,14 @@ BAN_ACTION = UserAction(
 	err_exception_msg="Ошибка при бане: {}"
 )
 
+UNBAN_ACTION = UserAction(
+	lambda bot, chat_id, user_id: bot.unban_chat_member(chat_id, user_id),
+	no_target_err_msg="Пожалуйста, ответьте на сообщение пользователя, которого хотите разбанить.",
+	bot_target_err_msg="ЧЗХ?!",
+	success_msg="Пользователь {} разбанен.",
+	err_exception_msg="Ошибка при разбане: {}"
+)
+
 MUTE_ACTION = UserAction(
 	lambda bot, chat_id, user_id: bot.restrict_chat_member(
 		chat_id,
@@ -102,4 +110,16 @@ MUTE_ACTION = UserAction(
 	bot_target_err_msg="Нельзя замутить бота.",
 	success_msg="Пользователь {} замучен (не может писать).",
 	err_exception_msg="Ошибка при муте: {}"
+)
+
+UNMUTE_ACTION = UserAction(
+	lambda bot, chat_id, user_id: bot.restrict_chat_member(
+		chat_id,
+		user_id,
+		permissions=ChatPermissions(can_send_messages=True)
+	),
+	no_target_err_msg="Пожалуйста, ответьте на сообщение пользователя, которого хотите размутить.",
+	bot_target_err_msg="Операция не имеет смысла.",
+	success_msg="Пользователь {} размучен (теперь он может писать).",
+	err_exception_msg="Ошибка при размуте: {}"
 )

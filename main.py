@@ -24,10 +24,20 @@ async def start_command(message: Message):
 async def ban_user(message: Message):
 	await BAN_ACTION.run_action(message, BOT)
 
+# /unban
+@DISPATCHER.message(Command("unban"))
+async def unban_user(message: Message):
+	await UNBAN_ACTION.run_action(message, BOT)
+
 # /mute
 @DISPATCHER.message(Command("mute"))
 async def mute_user(message: Message):
 	await MUTE_ACTION.run_action(message, BOT)
+
+# /unmute
+@DISPATCHER.message(Command("unmute"))
+async def unmute_user(message: Message):
+	await UNMUTE_ACTION.run_action(message, BOT)
 
 # /ping
 @DISPATCHER.message(Command("ping"))
