@@ -85,7 +85,7 @@ class UserAction:
 
 			if random.randint(0, 100) < FUNNY_EVENT_CANCE:
 				await sleep(random.randint(1000, 10000) / 1000)
-				return last.answer(get_ping_message())
+				return await last.answer(get_ping_message())
 
 			return last
 		except Exception as e:
