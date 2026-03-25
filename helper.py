@@ -3,20 +3,13 @@ from typing import Any, Callable
 from copy import Error
 
 import re as regex
+import random
 
+from aiogram.types import ChatMemberAdministrator, ChatMemberOwner, ChatPermissions, Message
 from aiogram import Bot
 from aiogram.enums import ChatType
-from aiogram.types import ChatMemberAdministrator, ChatMemberOwner, ChatPermissions, Message
 
-# Список запрещённых слов (можно дополнить)
-BAD_WORDS = {
-	"мат", "ругательство", "плохое_слово",
-}
-
-# Список запрещённых слов (можно дополнить)
-PING_MESSAGES = [
-	"Чики-брики в дамки!"
-]
+from config import * 
 
 def contains_bad_words(text: str | None) -> bool:
 	if not text:
@@ -35,6 +28,9 @@ async def is_admin(chat_id: int, user_id: int, bot: Bot) -> bool:
 		return isinstance(member, (ChatMemberAdministrator, ChatMemberOwner))
 	except Exception:
 		return False
+
+def get_ping_message():
+	return random.choice(PING_MESSAGES)
 
 type UserActionCallback = Callable[[Bot, int, int], Awaitable[Any]] # pyright: ignore[reportExplicitAny]
 
