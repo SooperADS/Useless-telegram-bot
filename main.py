@@ -40,11 +40,16 @@ async def on_debug(message: Message):
 	# Тест на идиота 🤡
 	if message.from_user == None:
 		return await message.answer("Отправитель не отправитель 🤡.")
-		
-	if message.reply_to_message == None:
-		return await message.answer("Вы не ответили на сообщение\n\n" + repr(message))
+	
+	msg_dict = {
+		"user_id": message.from_user,
+		"reply_message": message.reply_to_message
+	}
 
-	return await message.answer("Штатная ситуация\n\n" + repr(message))
+	if message.reply_to_message == None:
+		return await message.answer(f"Вы не ответили на сообщение\n\n{msg_dict}")
+
+	return await message.answer(f"Штатная ситуация\n\n{msg_dict}")
 
 @DISPATCHER.message()
 async def check_message(message: Message):
