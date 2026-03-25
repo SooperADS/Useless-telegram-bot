@@ -1,3 +1,4 @@
+from asyncio import sleep
 from collections.abc import Awaitable
 from typing import Any, Callable
 
@@ -79,8 +80,14 @@ class UserAction:
 
 		try:
 			await self.callback(bot, message.chat.id, target_id)
-			_ = await message.answer(self.success_msg.format(target_user.full_name))  
-			return await message.delete()
+			last = await message.answer(self.success_msg.format(target_user.full_name))
+			_ = await message.delete()
+
+			if random.randint(0, 100) < FUNNY_EVENT_CANCE:
+				await sleep(random.randint(1000, 10000) / 1000)
+				return last.answer(get_ping_message())
+
+			return last
 		except Exception as e:
 			return await message.answer(self.err_exception_msg.format(e))
 

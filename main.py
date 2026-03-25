@@ -62,7 +62,7 @@ async def on_debug(message: Message):
 	return await message.answer(f"Штатная ситуация\n\n{msg_dict}")
 
 @DISPATCHER.message()
-async def check_message(message: Message):
+async def dispatch_message(message: Message):
 	if message.chat.type not in [ChatType.GROUP, ChatType.SUPERGROUP]:
 		return
 
