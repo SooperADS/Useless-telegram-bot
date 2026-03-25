@@ -9,7 +9,7 @@ from helper import *
 import asyncio
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, filename="log.log", filemode="w+")
 
 BOT = Bot(token=BOT_TOKEN)
 DISPATCHER = Dispatcher()
