@@ -1,6 +1,5 @@
 from collections.abc import Awaitable
 from typing import Any, Callable
-from copy import Error
 
 import re as regex
 import random
@@ -61,7 +60,7 @@ class UserAction:
 		
 		# Тест на идиота 🤡
 		if message.from_user == None:
-			raise Error("API кал; оно сломалось")
+			return await message.answer("API – кал.")
 			
 		if not await is_admin(message.chat.id, message.from_user.id, bot):
 			return await message.answer("Вы не являетесь администратором этой группы.")

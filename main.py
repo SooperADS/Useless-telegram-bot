@@ -32,7 +32,19 @@ async def mute_user(message: Message):
 # /ping
 @DISPATCHER.message(Command("ping"))
 async def on_ping(message: Message):
-	return await message.answer("Чики-брики в дамки")
+	return await message.answer(text=get_ping_message())
+
+# /debug
+@DISPATCHER.message(Command("debug"))
+async def on_debug(message: Message):
+	# Тест на идиота 🤡
+	if message.from_user == None:
+		return await message.answer("Отправитель не отправитель 🤡.")
+		
+	if message.reply_to_message == None:
+		return await message.answer("Вы не ответили на сообщение\n\n" + repr(message))
+
+	return await message.answer("Штатная ситуация\n\n" + repr(message))
 
 @DISPATCHER.message()
 async def check_message(message: Message):
