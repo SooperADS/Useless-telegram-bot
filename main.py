@@ -42,8 +42,8 @@ async def on_debug(message: Message):
 		return await message.answer("Отправитель не отправитель 🤡.")
 	
 	msg_dict = {
-		"user_id": message.from_user,
-		"reply_message": message.reply_to_message
+		"user_id": message.from_user.id,
+		"has_reply_message": message.reply_to_message != None
 	}
 
 	if message.reply_to_message == None:
