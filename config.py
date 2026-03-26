@@ -633,4 +633,4 @@ PING_MESSAGES = [
 	"Отправь сюда что-то"
 ]
 
-FUNNY_EVENT_CANCE = 100
+FUNNY_EVENT_CHANCE = 100

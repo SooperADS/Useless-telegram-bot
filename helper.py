@@ -1,10 +1,8 @@
-from asyncio import sleep
 from collections.abc import Awaitable
 from typing import Any, Callable
 
 import re as regex
 import random
-from venv import logger
 
 from aiogram.types import ChatMemberAdministrator, ChatMemberOwner, ChatPermissions, Message
 from aiogram import Bot
@@ -81,17 +79,11 @@ class UserAction:
 
 		try:
 			await self.callback(bot, message.chat.id, target_id)
-			last = await message.answer(self.success_msg.format(target_user.full_name))
-			_ = await message.delete()
-
-			if random.randint(0, 100) < FUNNY_EVENT_CANCE:
-				await sleep(random.randint(1000, 10000) / 1000)
-				logger.info("Funn event")
-				return await last.answer(get_ping_message())
-
-			return last
+			_ = await message.answer(self.success_msg.format(target_user.full_name))
 		except Exception as e:
-			return await message.answer(self.err_exception_msg.format(e))
+			_ = await message.answer(self.err_exception_msg.format(e))
+		
+		return await message.delete()
 
 BAN_ACTION = UserAction(
 	lambda bot, chat_id, user_id: bot.ban_chat_member(chat_id, user_id),
