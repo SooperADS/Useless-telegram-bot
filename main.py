@@ -82,7 +82,7 @@ async def dispatch_message(message: Message):
 		logging.info(f"Удалено сообщение от {message.from_user.id} за мат: {message.text}")
 	elif random.randint(0, 1000) / 10 < FUNNY_EVENT_CHANCE:
 		logging.info("Весёлое событие в ответ на сообщение")
-		return await message.answer(get_ping_message())
+		return await message.reply(get_ping_message())
 
 # Запdуск бота
 async def main():
