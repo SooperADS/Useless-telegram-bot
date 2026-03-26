@@ -8,7 +8,7 @@ from aiogram.types import ChatMemberAdministrator, ChatMemberOwner, ChatPermissi
 from aiogram import Bot
 from aiogram.enums import ChatType
 
-from config import * 
+from .config import * 
 
 def contains_bad_words(text: str | None) -> bool:
 	if not text:

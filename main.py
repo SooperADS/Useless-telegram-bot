@@ -4,8 +4,8 @@ from aiogram.types import Message
 from aiogram.enums import ChatType
 from datetime import datetime
 
-from private import BOT_TOKEN
-from helper import *
+from .private import BOT_TOKEN
+from .module.helper import *
 
 import asyncio
 import logging
