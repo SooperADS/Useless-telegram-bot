@@ -4,6 +4,7 @@ from typing import Any, Callable
 
 import re as regex
 import random
+from venv import logger
 
 from aiogram.types import ChatMemberAdministrator, ChatMemberOwner, ChatPermissions, Message
 from aiogram import Bot
@@ -85,6 +86,7 @@ class UserAction:
 
 			if random.randint(0, 100) < FUNNY_EVENT_CANCE:
 				await sleep(random.randint(1000, 10000) / 1000)
+				logger.info("Funn event")
 				return await last.answer(get_ping_message())
 
 			return last
