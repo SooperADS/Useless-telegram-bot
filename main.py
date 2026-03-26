@@ -2,6 +2,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.enums import ChatType
+from datetime import datetime
 
 from private import BOT_TOKEN
 from helper import *
@@ -9,7 +10,7 @@ from helper import *
 import asyncio
 import logging
 
-logging.basicConfig(level=logging.INFO, filename="log.log", filemode="w+")
+logging.basicConfig(level=logging.INFO, filename=f"./logs/{datetime.now()}.log", filemode="w+")
 
 BOT = Bot(token=BOT_TOKEN)
 DISPATCHER = Dispatcher()
