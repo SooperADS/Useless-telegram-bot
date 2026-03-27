@@ -24,6 +24,12 @@ def enable_in_chat(chat_id: int):
 
 def disable_in_chat(chat_id: int):
 	__stopped_in_chats.add(chat_id)
+	
+def forget_chat(chat_id: int):
+	"""
+	Сбрасывает параметры цензора в заданном чате
+	"""
+	__stopped_in_chats.remove(chat_id)
 
 def is_enable_in_chat(chat_id: int) -> bool:
 	return chat_id not in __stopped_in_chats
