@@ -1,6 +1,8 @@
 from aiogram import Bot, Dispatcher
-from aiogram.filters import Command
-from aiogram.types import ChatPermissions, Message, User
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.filters import KICKED, ChatMemberUpdatedFilter, Command
+from aiogram.types import ChatMemberUpdated, ChatPermissions, Message, User
 from datetime import datetime
 
 from .module import wrappers
@@ -11,9 +13,19 @@ from .private import BOT_TOKEN
 import asyncio
 import logging
 
+#TODO:
+#> Больше информации о боте
+#> Команда help
+#> Аргументы команд
+#> unban -> pardon
+#> debug -> debug user
+#> Специальный сообщения для каждой команды
+
 logging.basicConfig(level=logging.INFO, filename=f"./logs/{datetime.now()}.log", filemode="w+")
 
-BOT = Bot(token=BOT_TOKEN)
+BOT = Bot(BOT_TOKEN,default=DefaultBotProperties(
+	parse_mode=ParseMode.MARKDOWN
+))
 DISPATCHER = Dispatcher()
 
 GREETING_MESSAGE = """
@@ -25,7 +37,7 @@ GREETING_MESSAGE = """
 @DISPATCHER.message(Command("start"))
 @wrappers.safe
 async def on_start_command(message: Message):
-	return await message.answer(GREETING_MESSAGE)
+	await message.answer(GREETING_MESSAGE)
 
 # /ban
 @DISPATCHER.message(Command("ban"))
@@ -35,7 +47,7 @@ async def on_start_command(message: Message):
 @wrappers.validate_exec_is_admin()
 @wrappers.unpack_target_as_replier()
 @wrappers.validate_bot_not_target()
-@wrappers.safe_action()
+@wrappers.safe_on_command_action()
 async def on_ban_command(message: Message, bot: Bot, user: User):
 	await bot.ban_chat_member(message.chat.id, user.id)
 
@@ -46,7 +58,7 @@ async def on_ban_command(message: Message, bot: Bot, user: User):
 @wrappers.bind_bot(BOT)
 @wrappers.validate_exec_is_admin()
 @wrappers.unpack_target_as_replier()
-@wrappers.safe_action()
+@wrappers.safe_on_command_action()
 async def on_unban_command(message: Message, bot: Bot, user: User):
 	await bot.unban_chat_member(message.chat.id, user.id)
 	await asyncio.sleep(10)
@@ -60,7 +72,7 @@ async def on_unban_command(message: Message, bot: Bot, user: User):
 @wrappers.validate_exec_is_admin()
 @wrappers.unpack_target_as_replier()
 @wrappers.validate_bot_not_target()
-@wrappers.safe_action()
+@wrappers.safe_on_command_action()
 async def on_mute_command(message: Message, bot: Bot, user: User):
 	await bot.restrict_chat_member(
 		message.chat.id,
@@ -76,7 +88,7 @@ async def on_mute_command(message: Message, bot: Bot, user: User):
 @wrappers.validate_exec_is_admin()
 @wrappers.unpack_target_as_replier()
 @wrappers.validate_bot_not_target()
-@wrappers.safe_action()
+@wrappers.safe_on_command_action()
 async def on_unmute_command(message: Message, bot: Bot, user: User):
 	await bot.restrict_chat_member(
 		message.chat.id,
@@ -88,21 +100,24 @@ async def on_unmute_command(message: Message, bot: Bot, user: User):
 @DISPATCHER.message(Command("ping"))
 @wrappers.safe
 async def on_ping_command(message: Message):
-	return await message.reply(text=helper.get_ping_message())
+	await message.reply(text=helper.get_ping_message())
 
 # /debug
 @DISPATCHER.message(Command("debug"))
 @wrappers.safe
 @wrappers.bind_bot(BOT)
 @wrappers.unpack_user
-@wrappers.safe_action()
+@wrappers.safe_on_command_action()
 async def on_debug_command(message: Message, bot: Bot, user: User):
+	chat_id = message.chat.id
 	msg_dict = {
 		"user_id": user.id,
+		"chat_id": chat_id,
 		"has_reply_message": message.reply_to_message != None,
 		"you_is_admin": helper.safe_result(
-			helper.is_admin, message.chat.id, user.id, bot
-		)
+			helper.is_admin, chat_id, user.id, bot
+		),
+		"chat_censor_enable": censor.is_enable_in_chat(chat_id)
 	}
 
 	if message.reply_to_message:
@@ -110,7 +125,45 @@ async def on_debug_command(message: Message, bot: Bot, user: User):
 			message.reply_to_message
 		)
 
-	return await message.answer(f"Debug information (for devs. only)\n\n{msg_dict}")
+	await message.answer(f"Debug information (for devs. only)\n\n{msg_dict}")
+
+# /sensor state
+@DISPATCHER.message(Command("censor state"))
+@wrappers.safe
+@wrappers.bind_bot(BOT)
+@wrappers.unpack_user
+@wrappers.safe_on_command_action()
+async def on_censor_state_command(message: Message, _bot: Bot, _user: User):
+	msg_state: str = "**включена**"
+	if censor.is_enable_in_chat(message.chat.id):
+		msg_state = "**включено**"
+	await message.answer(f"Модерация мата в чате: {msg_state}")
+
+# /sensor on
+@DISPATCHER.message(Command("censor on"))
+@wrappers.safe
+@wrappers.bind_bot(BOT)
+@wrappers.unpack_user
+@wrappers.safe_on_command_action()
+async def on_censor_on_command(message: Message, _bot: Bot, _user: User):
+	if censor.is_enable_in_chat(message.chat.id):
+		await message.answer(f"Модерация мата в чате уже включена")
+	else:
+		censor.enable_in_chat(message.chat.id) 
+		await message.answer(f"Включена модерация мата в чате")
+
+# /sensor off
+@DISPATCHER.message(Command("censor off"))
+@wrappers.safe
+@wrappers.bind_bot(BOT)
+@wrappers.unpack_user
+@wrappers.safe_on_command_action()
+async def on_censor_off_command(message: Message, _bot: Bot, _user: User):
+	if censor.is_enable_in_chat(message.chat.id):
+		await message.answer(f"Модерация мата в чате уже выключена")
+	else:
+		censor.disable_in_chat(message.chat.id) 
+		await message.answer(f"Выключена модерация мата в чате")
 
 @DISPATCHER.message()
 @wrappers.safe
@@ -122,6 +175,12 @@ async def dispatch_message(message: Message, _bot: Bot, _user: User):
 	if not await censor.process_message(message) and helper.test_funny_event_chance():
 		logging.info("Весёлое событие в ответ на сообщение")
 		await message.reply(helper.get_ping_message())
+
+@DISPATCHER.my_chat_member(ChatMemberUpdatedFilter(KICKED))
+@wrappers.safe
+async def on_kick(event: ChatMemberUpdated):
+	censor.forget_chat(event.chat.id)
+	logging.info(f"Бот исключён из чата с ID {event.chat.id}")
 
 async def main():
 	await DISPATCHER.start_polling(BOT)

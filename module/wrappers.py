@@ -108,7 +108,7 @@ def __validate_target_not_bot(
 		else: await __on_validation_err(message, fallback_message)
 	return __wrapper
 	
-def __safe_action(
+def __safe_on_command_action(
 	fx: BotUserWrapper,
 	/ success_message: str | None,
 	/ on_exception_message: str | None,
@@ -171,12 +171,12 @@ def validate_target_not_bot(
 
 VEFM_SUCCESS = "Команда выполнена успешно для пользователя {username}."
 VEFM_CATCH_EXCEPTION = "Ошибка при выполнении команды. \n{error}"
-def safe_action(
+def safe_on_command_action(
 	success_message: str | None = VEFM_SUCCESS,
 	on_exception_message: str | None = VEFM_CATCH_EXCEPTION,
 ) -> PipelineDecorator[BotUserWrapper]:
 	return functools.partial(
-		__safe_action,
+		__safe_on_command_action,
 		success_message=success_message,
 		on_exception_message=on_exception_message
 	)
