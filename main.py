@@ -1,93 +1,189 @@
 from aiogram import Bot, Dispatcher
-from aiogram.filters import Command
-from aiogram.types import Message
-from aiogram.enums import ChatType
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.filters import KICKED, ChatMemberUpdatedFilter, Command
+from aiogram.types import ChatMemberUpdated, ChatPermissions, Message, User
 from datetime import datetime
 
+from .module import wrappers
+from .module import helper
+from .module import censor
 from .private import BOT_TOKEN
-from .module.helper import *
 
 import asyncio
 import logging
 
+#TODO:
+#> Больше информации о боте
+#> Команда help
+#> Аргументы команд
+#> unban -> pardon
+#> debug -> debug user
+#> Специальный сообщения для каждой команды
+
 logging.basicConfig(level=logging.INFO, filename=f"./logs/{datetime.now()}.log", filemode="w+")
 
-BOT = Bot(token=BOT_TOKEN)
+BOT = Bot(BOT_TOKEN,default=DefaultBotProperties(
+	parse_mode=ParseMode.MARKDOWN
+))
 DISPATCHER = Dispatcher()
+
+GREETING_MESSAGE = """
+Привет! Я бот-модератор.
+Используйте /ban (в ответ на сообщение) для бана, /mute (в ответ на сообщение) для мута.
+"""
 
 # /start
 @DISPATCHER.message(Command("start"))
-async def start_command(message: Message):
-	return await message.answer("Привет! Я бот-модератор. Используйте /ban (в ответ на сообщение) для бана, /mute (в ответ на сообщение) для мута.")
+@wrappers.safe
+async def on_start_command(message: Message):
+	await message.answer(GREETING_MESSAGE)
 
 # /ban
 @DISPATCHER.message(Command("ban"))
-async def ban_user(message: Message):
-	await BAN_ACTION.run_action(message, BOT)
+@wrappers.safe
+@wrappers.validate_chat_type()
+@wrappers.bind_bot(BOT)
+@wrappers.validate_exec_is_admin()
+@wrappers.unpack_target_as_replier()
+@wrappers.validate_bot_not_target()
+@wrappers.safe_on_command_action()
+async def on_ban_command(message: Message, bot: Bot, user: User):
+	await bot.ban_chat_member(message.chat.id, user.id)
 
 # /unban
 @DISPATCHER.message(Command("unban"))
-async def unban_user(message: Message):
-	await UNBAN_ACTION.run_action(message, BOT)
+@wrappers.safe
+@wrappers.validate_chat_type()
+@wrappers.bind_bot(BOT)
+@wrappers.validate_exec_is_admin()
+@wrappers.unpack_target_as_replier()
+@wrappers.safe_on_command_action()
+async def on_unban_command(message: Message, bot: Bot, user: User):
+	await bot.unban_chat_member(message.chat.id, user.id)
+	await asyncio.sleep(10)
+	await message.answer("Debug message! Must be sended with 10s delay after receiving command")
 
 # /mute
 @DISPATCHER.message(Command("mute"))
-async def mute_user(message: Message):
-	await MUTE_ACTION.run_action(message, BOT)
+@wrappers.safe
+@wrappers.validate_chat_type()
+@wrappers.bind_bot(BOT)
+@wrappers.validate_exec_is_admin()
+@wrappers.unpack_target_as_replier()
+@wrappers.validate_bot_not_target()
+@wrappers.safe_on_command_action()
+async def on_mute_command(message: Message, bot: Bot, user: User):
+	await bot.restrict_chat_member(
+		message.chat.id,
+		user.id,
+		permissions=ChatPermissions(can_send_messages=False)
+	)
 
 # /unmute
 @DISPATCHER.message(Command("unmute"))
-async def unmute_user(message: Message):
-	await UNMUTE_ACTION.run_action(message, BOT)
+@wrappers.safe
+@wrappers.validate_chat_type()
+@wrappers.bind_bot(BOT)
+@wrappers.validate_exec_is_admin()
+@wrappers.unpack_target_as_replier()
+@wrappers.validate_bot_not_target()
+@wrappers.safe_on_command_action()
+async def on_unmute_command(message: Message, bot: Bot, user: User):
+	await bot.restrict_chat_member(
+		message.chat.id,
+		user.id,
+		permissions=ChatPermissions(can_send_messages=True)
+	)
 
 # /ping
 @DISPATCHER.message(Command("ping"))
-async def on_ping(message: Message):
-	return await message.answer(text=get_ping_message())
+@wrappers.safe
+async def on_ping_command(message: Message):
+	await message.reply(text=helper.get_ping_message())
 
 # /debug
 @DISPATCHER.message(Command("debug"))
-async def on_debug(message: Message):
-	# Тест на идиота 🤡
-	if message.from_user == None:
-		return await message.answer("Отправитель не отправитель 🤡.")
-	
+@wrappers.safe
+@wrappers.bind_bot(BOT)
+@wrappers.unpack_user
+@wrappers.safe_on_command_action()
+async def on_debug_command(message: Message, bot: Bot, user: User):
+	chat_id = message.chat.id
 	msg_dict = {
-		"user_id": message.from_user.id,
-		"has_reply_message": message.reply_to_message != None
+		"user_id": user.id,
+		"chat_id": chat_id,
+		"has_reply_message": message.reply_to_message != None,
+		"you_is_admin": helper.safe_result(
+			helper.is_admin, chat_id, user.id, bot
+		),
+		"chat_censor_enable": censor.is_enable_in_chat(chat_id)
 	}
 
-	if message.reply_to_message == None:
-		return await message.answer(f"Вы не ответили на сообщение\n\n{msg_dict}")
+	if message.reply_to_message:
+		msg_dict["reply_target_is_service_message"] = helper.is_service_message(
+			message.reply_to_message
+		)
 
-	return await message.answer(f"Штатная ситуация\n\n{msg_dict}")
+	await message.answer(f"Debug information (for devs. only)\n\n{msg_dict}")
+
+# /sensor state
+@DISPATCHER.message(Command("censor state"))
+@wrappers.safe
+@wrappers.bind_bot(BOT)
+@wrappers.unpack_user
+@wrappers.safe_on_command_action()
+async def on_censor_state_command(message: Message, _bot: Bot, _user: User):
+	msg_state: str = "**включена**"
+	if censor.is_enable_in_chat(message.chat.id):
+		msg_state = "**включено**"
+	await message.answer(f"Модерация мата в чате: {msg_state}")
+
+# /sensor on
+@DISPATCHER.message(Command("censor on"))
+@wrappers.safe
+@wrappers.bind_bot(BOT)
+@wrappers.unpack_user
+@wrappers.safe_on_command_action()
+async def on_censor_on_command(message: Message, _bot: Bot, _user: User):
+	if censor.is_enable_in_chat(message.chat.id):
+		await message.answer(f"Модерация мата в чате уже включена")
+	else:
+		censor.enable_in_chat(message.chat.id) 
+		await message.answer(f"Включена модерация мата в чате")
+
+# /sensor off
+@DISPATCHER.message(Command("censor off"))
+@wrappers.safe
+@wrappers.bind_bot(BOT)
+@wrappers.unpack_user
+@wrappers.safe_on_command_action()
+async def on_censor_off_command(message: Message, _bot: Bot, _user: User):
+	if censor.is_enable_in_chat(message.chat.id):
+		await message.answer(f"Модерация мата в чате уже выключена")
+	else:
+		censor.disable_in_chat(message.chat.id) 
+		await message.answer(f"Выключена модерация мата в чате")
 
 @DISPATCHER.message()
-async def dispatch_message(message: Message):
-	if message.chat.type not in [ChatType.GROUP, ChatType.SUPERGROUP]:
-		return
-
-	if message.from_user == None:
-		return
-
-	if message.from_user.is_bot:
-		return
-
-	if contains_bad_words(message.text):
-		_ = await message.delete()
-		_ = await message.answer(
-			f"Пользователь {message.from_user.full_name}, не используйте ненормативную лексику!",
-			delete_in_seconds=5
-		)
-		
-		logging.info(f"Удалено сообщение от {message.from_user.id} за мат: {message.text}")
-	elif random.randint(0, 1000) / 10 < FUNNY_EVENT_CHANCE:
+@wrappers.safe
+@wrappers.validate_chat_type(None)
+@wrappers.bind_bot(BOT)
+@wrappers.unpack_user
+@wrappers.validate_bot_not_target(None)
+async def dispatch_message(message: Message, _bot: Bot, _user: User):
+	if not await censor.process_message(message) and helper.test_funny_event_chance():
 		logging.info("Весёлое событие в ответ на сообщение")
-		return await message.reply(get_ping_message())
+		await message.reply(helper.get_ping_message())
 
-# Запdуск бота
+@DISPATCHER.my_chat_member(ChatMemberUpdatedFilter(KICKED))
+@wrappers.safe
+async def on_kick(event: ChatMemberUpdated):
+	censor.forget_chat(event.chat.id)
+	logging.info(f"Бот исключён из чата с ID {event.chat.id}")
+
 async def main():
-	await DISPATCHER.start_polling(BOT)  # pyright: ignore[reportUnknownMemberType]
+	await DISPATCHER.start_polling(BOT)
 
 if __name__== "__main__" :
 	asyncio.run(main())

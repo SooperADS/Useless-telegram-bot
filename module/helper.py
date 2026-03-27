@@ -1,126 +1,62 @@
-from collections.abc import Awaitable
+from csv import Error
 from typing import Any, Callable
 
-import re as regex
-import random
-
-from aiogram.types import ChatMemberAdministrator, ChatMemberOwner, ChatPermissions, Message
-from aiogram import Bot
+from aiogram.types import Chat, ChatMemberAdministrator, ChatMemberOwner, Message
 from aiogram.enums import ChatType
+from aiogram import Bot
+
+import random
+import logging
 
 from .config import * 
 
-def contains_bad_words(text: str | None) -> bool:
-	if not text:
-		return False
-
-	cleaned_text = regex.sub(r'[^\w\s]', '', text.lower())
-	for word in cleaned_text.split():
-		if word in BAD_WORDS:
-			return True
-
-	return False
-
 async def is_admin(chat_id: int, user_id: int, bot: Bot) -> bool:
 	try:
-		member = await bot.get_chat_member(chat_id, user_id)
-		return isinstance(member, (ChatMemberAdministrator, ChatMemberOwner))
-	except Exception:
-		return False
+		return isinstance(
+			await bot.get_chat_member(chat_id, user_id),
+			(ChatMemberAdministrator, ChatMemberOwner)
+		)
+	except Exception: return False
 
-def get_ping_message():
+def get_ping_message() -> str:
 	return random.choice(PING_MESSAGES)
 
-type UserActionCallback = Callable[[Bot, int, int], Awaitable[Any]] # pyright: ignore[reportExplicitAny]
+def bot_in_supported_chat(chat: Chat) -> bool:
+	return chat.type not in [ChatType.GROUP, ChatType.SUPERGROUP]
 
-class UserAction:
-	callback: UserActionCallback
-	bot_target_err_msg: str
-	no_target_err_msg: str
-	err_exception_msg: str
-	success_msg: str
+def is_service_message(message: Message) -> bool:
+	return (
+		message.text or
+		message.audio or
+		message.animation or
+		message.document or
+		message.game or
+		message.photo or
+		message.sticker or
+		message.video or
+		message.video_note or
+		message.voice or
+		message.checklist or
+		message.contact or
+		message.venue or
+		message.location or
+		message.paid_media or
+		message.passport_data or
+		message.poll or
+		message.dice or
+		message.giveaway or
+		message.story or
+		None
+	) != None
 
-	def __init__(
-		self,
-		callback: UserActionCallback,
-		no_target_err_msg: str,
-		bot_target_err_msg: str,
-		err_exception_msg: str,
-		success_msg: str
-	):
-		self.callback = callback
-		self.bot_target_err_msg = bot_target_err_msg
-		self.no_target_err_msg = no_target_err_msg
-		self.err_exception_msg = err_exception_msg
-		self.success_msg = success_msg
+def log_err(error: Exception):
+	logging.exception(error)
 
-	async def run_action(self, message: Message, bot: Bot) -> Any: # pyright: ignore[reportExplicitAny, reportAny]
-		if message.chat.type not in [ChatType.GROUP, ChatType.SUPERGROUP]:
-			return await message.answer("Эта команда работает только в группах.")
-		
-		# Тест на идиота 🤡
-		if message.from_user == None:
-			return await message.answer("API – кал.")
-			
-		if not await is_admin(message.chat.id, message.from_user.id, bot):
-			return await message.answer("Вы не являетесь администратором этой группы.")
+def safe_result[R](fx: Callable[..., R], *pos: Any, **args: Any) -> R | None:
+	try: 
+		return fx(pos, **args)
+	except Error as error:
+		log_err(error)
 
-		if message.reply_to_message == None:
-			return await message.answer(self.no_target_err_msg)
-
-		target_user = message.reply_to_message.from_user
-		if target_user == None:
-			return await message.answer("Это команда не работает с системгыми сообщеними.")
-
-		target_id = target_user.id
-
-		if target_id == bot.id:
-			return await message.answer(self.bot_target_err_msg)
-
-		try:
-			await self.callback(bot, message.chat.id, target_id)
-			_ = await message.answer(self.success_msg.format(target_user.full_name))
-		except Exception as e:
-			_ = await message.answer(self.err_exception_msg.format(e))
-		
-		return await message.delete()
-
-BAN_ACTION = UserAction(
-	lambda bot, chat_id, user_id: bot.ban_chat_member(chat_id, user_id),
-	no_target_err_msg="Пожалуйста, ответьте на сообщение пользователя, которого хотите забанить.",
-	bot_target_err_msg="Нельзя забанить бота.",
-	success_msg="Пользователь {} забанен.",
-	err_exception_msg="Ошибка при бане: {}"
-)
-
-UNBAN_ACTION = UserAction(
-	lambda bot, chat_id, user_id: bot.unban_chat_member(chat_id, user_id),
-	no_target_err_msg="Пожалуйста, ответьте на сообщение пользователя, которого хотите разбанить.",
-	bot_target_err_msg="ЧЗХ?!",
-	success_msg="Пользователь {} разбанен.",
-	err_exception_msg="Ошибка при разбане: {}"
-)
-
-MUTE_ACTION = UserAction(
-	lambda bot, chat_id, user_id: bot.restrict_chat_member(
-		chat_id,
-		user_id,
-		permissions=ChatPermissions(can_send_messages=False)
-	),
-	no_target_err_msg="Пожалуйста, ответьте на сообщение пользователя, которого хотите замутить.",
-	bot_target_err_msg="Нельзя замутить бота.",
-	success_msg="Пользователь {} замучен (не может писать).",
-	err_exception_msg="Ошибка при муте: {}"
-)
-
-UNMUTE_ACTION = UserAction(
-	lambda bot, chat_id, user_id: bot.restrict_chat_member(
-		chat_id,
-		user_id,
-		permissions=ChatPermissions(can_send_messages=True)
-	),
-	no_target_err_msg="Пожалуйста, ответьте на сообщение пользователя, которого хотите размутить.",
-	bot_target_err_msg="Операция не имеет смысла.",
-	success_msg="Пользователь {} размучен (теперь он может писать).",
-	err_exception_msg="Ошибка при размуте: {}"
-)
+def test_funny_event_chance(ratio: int = 10) -> bool:
+	return random.randint(0, 100 * ratio) / ratio < (FUNNY_EVENT_CHANCE - 1)
