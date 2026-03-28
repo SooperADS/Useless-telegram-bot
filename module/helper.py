@@ -49,7 +49,7 @@ def is_service_message(message: Message) -> bool:
 		message.giveaway or
 		message.story or
 		None
-	) != None
+	) == None
 
 def log_err(error: Exception):
 	logging.exception(error)
