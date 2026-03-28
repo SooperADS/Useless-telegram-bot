@@ -42,7 +42,7 @@ async def apply_on_message(message: Message) -> bool:
 		return False
 	
 	await message.answer(
-		f"Пользователь {message.from_user.full_name}, не используйте ненормативную лексику!",
+		f"Пользователь **{message.from_user.full_name}**, не используйте ненормативную лексику!",
 		delete_in_seconds=5
 	)
 

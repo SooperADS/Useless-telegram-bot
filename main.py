@@ -167,6 +167,7 @@ async def on_censor_off_command(message: Message, _bot: Bot, _user: User):
 @DISPATCHER.message()
 @wrappers.safe
 @wrappers.validate_chat_type(None)
+@wrappers.discard_service_messages
 @wrappers.bind_bot(BOT)
 @wrappers.unpack_user
 @wrappers.validate_bot_not_target(None)

@@ -30,6 +30,13 @@ def safe(fx: Wrapper) -> Wrapper:
 			log_err(error)
 	return __wrapper
 
+def discard_service_messages(fx: MainWrapper) -> MainWrapper:
+	async def __wrapper(message: Message):
+		if not is_service_message(message):
+			await fx(message)
+	
+	return __wrapper
+
 type MainWrapper = Callable[[Message], Awaitable[Any]]
 
 def __validate_chat_type(
@@ -169,7 +176,7 @@ def validate_target_not_bot(
 ) -> PipelineDecorator[BotUserWrapper]:
 	return functools.partial(__validate_target_not_bot, fallback_message=fallback_message)
 
-VEFM_SUCCESS = "Команда выполнена успешно для пользователя {username}."
+VEFM_SUCCESS = "Команда выполнена успешно для пользователя **{username}**."
 VEFM_CATCH_EXCEPTION = "Ошибка при выполнении команды. \n{error}"
 def safe_on_command_action(
 	success_message: str | None = VEFM_SUCCESS,
