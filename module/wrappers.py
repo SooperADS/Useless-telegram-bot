@@ -23,9 +23,9 @@ type PipelineDecorator[
 type Wrapper = Callable[..., Awaitable[Any]]
 
 def safe(fx: Wrapper) -> Wrapper:
-	async def __wrapper(*pos: Any, **args: Any):
+	async def __wrapper(*pos: Any):
 		try:
-			await fx(pos, args)
+			await fx(pos)
 		except Exception as error:
 			log_err(error)
 	return __wrapper
