@@ -110,24 +110,24 @@ async def on_ping_command(message: Message):
 async def on_debug_command(message: Message, bot: Bot, user: User):
 	chat_id = message.chat.id
 	msg_dict = {
-		"user_id": user.id,
-		"chat_id": chat_id,
-		"has_reply_message": message.reply_to_message != None,
-		"you_is_admin": helper.safe_result(
+		"`user_id`": user.id,
+		"`chat_id`": chat_id,
+		"`has_reply_message`": message.reply_to_message != None,
+		"`you_is_admin`": helper.safe_result(
 			helper.is_admin, chat_id, user.id, bot
 		),
-		"chat_censor_enable": censor.is_enable_in_chat(chat_id)
+		"`chat_censor_enable`": censor.is_enable_in_chat(chat_id)
 	}
 
 	if message.reply_to_message:
-		msg_dict["reply_target_is_service_message"] = helper.is_service_message(
+		msg_dict["`reply_target_is_service_message`"] = helper.is_service_message(
 			message.reply_to_message
 		)
 
 	await message.answer(f"Debug information (for devs. only)\n\n{msg_dict}")
 
-# /sensor state
-@DISPATCHER.message(Command("censor state"))
+# /censor-state
+@DISPATCHER.message(Command("censor-state"))
 @wrappers.safe
 @wrappers.bind_bot(BOT)
 @wrappers.unpack_user
@@ -138,8 +138,8 @@ async def on_censor_state_command(message: Message, _bot: Bot, _user: User):
 		msg_state = "**включено**"
 	await message.answer(f"Модерация мата в чате: {msg_state}")
 
-# /sensor on
-@DISPATCHER.message(Command("censor on"))
+# /censor-on
+@DISPATCHER.message(Command("censor-on"))
 @wrappers.safe
 @wrappers.bind_bot(BOT)
 @wrappers.unpack_user
@@ -151,8 +151,8 @@ async def on_censor_on_command(message: Message, _bot: Bot, _user: User):
 		censor.enable_in_chat(message.chat.id) 
 		await message.answer(f"Включена модерация мата в чате")
 
-# /sensor off
-@DISPATCHER.message(Command("censor off"))
+# /censor-off
+@DISPATCHER.message(Command("censor-off"))
 @wrappers.safe
 @wrappers.bind_bot(BOT)
 @wrappers.unpack_user
