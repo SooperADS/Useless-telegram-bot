@@ -12,6 +12,7 @@ from .private import BOT_TOKEN
 
 import asyncio
 import logging
+import sys
 
 #TODO:
 #> Больше информации о боте
@@ -22,6 +23,7 @@ import logging
 #> Специальный сообщения для каждой команды
 
 logging.basicConfig(level=logging.INFO, filename=f"./logs/{datetime.now()}.log", filemode="w+")
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 BOT = Bot(BOT_TOKEN,default=DefaultBotProperties(
 	parse_mode=ParseMode.MARKDOWN
