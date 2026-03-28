@@ -133,9 +133,9 @@ async def on_debug_command(message: Message, bot: Bot, user: User):
 @wrappers.unpack_user
 @wrappers.safe_on_command_action()
 async def on_censor_state_command(message: Message, _bot: Bot, _user: User):
-	msg_state: str = "**включена**"
+	msg_state: str = "__вкл.__"
 	if censor.is_enable_in_chat(message.chat.id):
-		msg_state = "**включено**"
+		msg_state = "__выкл.__"
 	await message.answer(f"Модерация мата в чате: {msg_state}")
 
 # /censor-on
@@ -158,7 +158,7 @@ async def on_censor_on_command(message: Message, _bot: Bot, _user: User):
 @wrappers.unpack_user
 @wrappers.safe_on_command_action()
 async def on_censor_off_command(message: Message, _bot: Bot, _user: User):
-	if censor.is_enable_in_chat(message.chat.id):
+	if not censor.is_enable_in_chat(message.chat.id):
 		await message.answer(f"Модерация мата в чате уже выключена")
 	else:
 		censor.disable_in_chat(message.chat.id) 

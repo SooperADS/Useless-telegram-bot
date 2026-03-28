@@ -53,7 +53,7 @@ async def process_message(message: Message) -> bool:
 	"""
 	Обрабатываем сообщение и, при надобности, применяем цензуру
 	"""
-	if message.text and message.chat.id not in __stopped_in_chats:
+	if message.text and is_enable_in_chat(message.chat.id):
 		if str_contains_bad_words(message.text):
 			return await apply_on_message(message)
 	
