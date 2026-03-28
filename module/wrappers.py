@@ -25,7 +25,7 @@ type Wrapper = Callable[..., Awaitable[Any]]
 def safe(fx: Wrapper) -> Wrapper:
 	async def __wrapper(*pos: Any):
 		try:
-			await fx(pos)
+			await fx(*pos)
 		except Exception as error:
 			log_err(error)
 	return __wrapper
