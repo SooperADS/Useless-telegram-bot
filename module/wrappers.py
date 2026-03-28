@@ -33,8 +33,8 @@ def safe(fx: Wrapper) -> Wrapper:
 type MainWrapper = Callable[[Message], Awaitable[Any]]
 
 def __validate_chat_type(
-	fx: MainWrapper,
-	/ fallback_message: str | None
+	fx: MainWrapper, /,
+	fallback_message: str | None
 ) -> MainWrapper:
 	async def __wrapper(message: Message):
 		if message.chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
@@ -46,16 +46,16 @@ def __validate_chat_type(
 type BotWrapper = Callable[[Message, Bot], Awaitable[Any]]
 
 def __bind_bot(
-	fx: BotWrapper,
-	/ bot: Bot
+	fx: BotWrapper, /,
+	bot: Bot
 ) -> MainWrapper:
 	async def __wrapper(message: Message):
 		await fx(message, bot)
 	return __wrapper
 
 def __validate_exec_is_admin(
-	fx: BotWrapper,
-	/ fallback_message: str | None
+	fx: BotWrapper, /,
+	fallback_message: str | None
 ) -> BotWrapper:
 	async def __wrapper(message: Message, bot: Bot):
 		if message.from_user:
@@ -75,9 +75,9 @@ def unpack_user(fx: BotUserWrapper) -> BotWrapper:
 type BotUserWrapper = Callable[[Message, Bot, User], Awaitable[Any]]
 
 def __unpack_target_as_replier(
-	fx: BotUserWrapper,
-	/ no_reply_fallback_message: str | None,
-	/ no_target_fallback_message: str | None
+	fx: BotUserWrapper, /,
+	no_reply_fallback_message: str | None,
+	no_target_fallback_message: str | None
 ) -> BotWrapper:
 	async def __wrapper(message: Message, bot: Bot):
 		if message.reply_to_message:
@@ -89,8 +89,8 @@ def __unpack_target_as_replier(
 	return __wrapper
 	
 def __validate_bot_is_not_target(
-	fx: BotUserWrapper,
-	/ fallback_message: str | None
+	fx: BotUserWrapper, /,
+	fallback_message: str | None
 ) -> BotUserWrapper:
 	async def __wrapper(message: Message, bot: Bot, user: User):
 		if bot.id != user.id:
@@ -99,8 +99,8 @@ def __validate_bot_is_not_target(
 	return __wrapper
 	
 def __validate_target_not_bot(
-	fx: BotUserWrapper,
-	/ fallback_message: str | None
+	fx: BotUserWrapper, /,
+	fallback_message: str | None
 ) -> BotUserWrapper:
 	async def __wrapper(message: Message, bot: Bot, user: User):
 		if not user.is_bot:
@@ -109,9 +109,9 @@ def __validate_target_not_bot(
 	return __wrapper
 	
 def __safe_on_command_action(
-	fx: BotUserWrapper,
-	/ success_message: str | None,
-	/ on_exception_message: str | None,
+	fx: BotUserWrapper, /,
+	success_message: str | None,
+	on_exception_message: str | None,
 ) -> BotUserWrapper:
 	async def __wrapper(message: Message, bot: Bot, user: User):
 		try:

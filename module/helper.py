@@ -1,12 +1,14 @@
-from csv import Error
-from typing import Any, Callable
-
 from aiogram.types import Chat, ChatMemberAdministrator, ChatMemberOwner, Message
 from aiogram.enums import ChatType
 from aiogram import Bot
 
+from typing import Any, Callable
+from datetime import datetime
+
 import random
 import logging
+import sys
+import os
 
 from .config import * 
 
@@ -55,8 +57,21 @@ def log_err(error: Exception):
 def safe_result[R](fx: Callable[..., R], *pos: Any, **args: Any) -> R | None:
 	try: 
 		return fx(pos, **args)
-	except Error as error:
+	except Exception as error:
 		log_err(error)
 
 def test_funny_event_chance(ratio: int = 10) -> bool:
 	return random.randint(0, 100 * ratio) / ratio < (FUNNY_EVENT_CHANCE - 1)
+
+def setup_logger():
+	if not os.path.exists("./logs"):
+		os.makedirs("./logs")
+
+	o = datetime.now()
+
+	logging.basicConfig(
+		level=logging.INFO,
+		filename=f"./logs/{o.day}-{o.month}-{o.year} {o.hour}-{o.minute}-{o.second}.log",
+		filemode="w+"
+	)
+	logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))

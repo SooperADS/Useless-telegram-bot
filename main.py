@@ -3,16 +3,14 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import KICKED, ChatMemberUpdatedFilter, Command
 from aiogram.types import ChatMemberUpdated, ChatPermissions, Message, User
-from datetime import datetime
 
-from .module import wrappers
-from .module import helper
-from .module import censor
-from .private import BOT_TOKEN
+from module import wrappers
+from module import helper
+from module import censor
+from private import BOT_TOKEN
 
 import asyncio
 import logging
-import sys
 
 #TODO:
 #> Больше информации о боте
@@ -22,8 +20,7 @@ import sys
 #> debug -> debug user
 #> Специальный сообщения для каждой команды
 
-logging.basicConfig(level=logging.INFO, filename=f"./logs/{datetime.now()}.log", filemode="w+")
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+helper.setup_logger()
 
 BOT = Bot(BOT_TOKEN,default=DefaultBotProperties(
 	parse_mode=ParseMode.MARKDOWN
